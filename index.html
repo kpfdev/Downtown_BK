@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+
+    <title>Downtown Brooklyn Data Viewer</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta charset='utf-8' />
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+    <!-- Bootstrap core CSS -->
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Ion Slider -->
+    <link href='vendor/ion_slider/css/ion.rangeSlider.min.css' rel='stylesheet'/>
+
+    <!-- Mapbox -->
+    <script src='vendor/mapbox/js/mapbox-gl.js'></script>
+    <link href='vendor/mapbox/css/mapbox-gl.css' rel='stylesheet'/>
+
+    <!--Custom CSS-->
+    <link rel="stylesheet" href="css/styles.css" type="text/css" />
+
+  </head>
+
+  <body>
+
+    <!-- Page Content -->
+
+    <div id='map' class='position-absolute w-100 h-100'></div>
+
+    <div class='container-fluid px-0'>
+
+      <div class='row justify-content-between mx-0 pt-3'>
+
+        <div id='column-left' class='col mx-3'>
+
+          <!--Building Layers-->
+          <div class='row sidebar rounded mb-3 p-3'>
+
+            <h4 class='col-lg-10 mb-0 px-0'>Building Layers</h4>
+            <button id="buildings-button" type="button" class="col-lg-2 btn btn-secondary btn-sm visible" aria-haspopup="false">on</button>
+
+            <button id="existing" type="button" class="btn btn-dark btn-sm mb-1 mr-1 layer-button visible" aria-haspopup="false">Existing</button>
+            <button id="recent" type="button" class="btn btn-info btn-sm mb-1 mr-1  mr-1 layer-button visible" aria-haspopup="false">Recent (since 1995)</button>
+            <button id="demolished" type="button" class="btn btn-outline-danger btn-sm mb-1 mr-1 layer-button hidden" aria-haspopup="false">Demolished</button>
+            <button id="future" type="button" class="btn btn-outline-warning btn-sm mb-1 mr-1 layer-button hidden" aria-haspopup="false">Future</button>
+
+            <div class='mt-4'>
+              <h6>Data: <a class='text-secondary' href='https://www1.nyc.gov/site/planning/data-maps/open-data/dwn-nyc-3d-model-download.page'>DCP NYC 3D</a></h6>
+            </div>
+
+          </div>
+
+          <!--Comfort Data-->
+          <div class='row sidebar row rounded mb-3 p-3'>
+
+            <h4 class='col-lg-10 mb-0 px-0'>Outdoor Comfort</h4>
+            <button id="comfort-button" type="button" class="col-lg-2 btn btn-outline-secondary btn-sm hidden" aria-haspopup="false">off</button>
+
+            <button id="comfort-dropdown" type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              % of Time in Comfort
+            </button>
+            <div id="comfort-dropdown-item" class="dropdown-menu scrollable-menu w-100" aria-labelledby="dropdownMenuButton">
+              <h6 class="dropdown-header"><strong>Summer</strong></h6>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" onclick='updateColorLinear("comfort", "#irs-comfort", "perc_comfort_summer", "red2green",[50,100])' href="#">% of Time in Comfort</button>
+              <button class="dropdown-item" onclick='updateColorLinear("comfort", "#irs-comfort", "perc_stress_summer", "white2red",[0,20])' href="#">% of Time in Stress</button>
+              <button class="dropdown-item" onclick='updateColorLinear("comfort", "#irs-comfort", "perc_comfort_future_summer", "red2green",[50,100])' href="#">% of Time in Comfort (Future)</button>
+              <button class="dropdown-item" onclick='updateColorLinear("comfort", "#irs-comfort", "perc_stress_future_summer", "white2red",[0,20])' href="#">% of Time in Stress (Future)</button>
+              <button class="dropdown-item" onclick='updateColorLinear("comfort", "#irs-comfort", "perc_improve_comfort_summer", "red2white2green",[-20,20])' href="#">% Change Comfort (Future)</button>
+              <button class="dropdown-item" onclick='updateColorLinear("comfort", "#irs-comfort", "perc_improve_stress_summer", "red2white2green",[-20,20])' href="#">% Change Stress (Future)</button>
+              <div class="dropdown-divider"></div>
+              <h6 class="dropdown-header"><strong>Winter</strong></h6>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" onclick='updateColorLinear("comfort", "#irs-comfort", "perc_comfort_winter", "red2green",[25,75])' href="#">% of Time in Comfort</button>
+              <button class="dropdown-item" onclick='updateColorLinear("comfort", "#irs-comfort", "perc_stress_winter", "white2red",[21,24])' href="#">% of Time in Stress</button>
+              <button class="dropdown-item" onclick='updateColorLinear("comfort", "#irs-comfort", "perc_comfort_future_winter", "red2green",[25,75])' href="#">% of Time in Comfort (Future)</button>
+              <button class="dropdown-item" onclick='updateColorLinear("comfort", "#irs-comfort", "perc_stress_future_winter", "white2red",[21,24])' href="#">% of Time in Stress (Future)</button>
+              <button class="dropdown-item" onclick='updateColorLinear("comfort", "#irs-comfort", "perc_improve_comfort_winter", "red2white2green",[-20,20])' href="#">% Change Comfort (Future)</button>
+              <button class="dropdown-item" onclick='updateColorLinear("comfort", "#irs-comfort", "perc_improve_stress_winter", "red2white2green",[-1,1])' href="#">% Change Stress (Future)</button>
+            </div>
+
+            <div class='col-lg-12 mt-3 px-0'>
+              <div id="comfortSlider">
+                <div id="irs-comfort"></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!--Public Life Survey-->
+          <div class='row sidebar rounded mb-3 p-3'>
+            <h4 class='col-lg-10 mb-0 px-0'>Public Life Survey</h4>
+            <button id="survey-button" type="button" class="col-lg-2 btn btn-outline-secondary btn-sm hidden" aria-haspopup="false">off</button>
+
+            <button id="survey-dropdown" type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Passive Activities
+            </button>
+            <div id="survey-dropdown-item" class="dropdown-menu scrollable-menu w-100" aria-labelledby="dropdownMenuButton">
+              <button class="dropdown-item" onclick='updateCircleRadius("survey","Sum_Action_Passive",.8)' href="#">Passive Activities</button>
+              <button class="dropdown-item" onclick='updateCircleRadius("survey","Sum_Action_Active",.8)' href="#">Active Activities</button>
+              <button class="dropdown-item" onclick='updateCircleRadius("survey","Average_Noise_Value",12)' href="#">Noise</button>
+            </div>
+
+          </div>
+
+          <!--MapPLUTO Data-->
+          <div class='row sidebar row rounded mb-3 p-3'>
+
+            <h4 class='col-lg-10 mb-0 px-0'>MapPLUTO</h4>
+            <button id="pluto-button" type="button" class="col-lg-2 btn btn-outline-secondary btn-sm hidden" aria-haspopup="false">off</button>
+
+            <button id="pluto-dropdown" type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Retail Area
+            </button>
+            <div id="pluto-dropdown-item" class="dropdown-menu scrollable-menu w-100" aria-labelledby="dropdownMenuButton">
+              <button class="dropdown-item" onclick='updateColorLinear("pluto", "#irs-pluto", "RetailArea", "pinks",[0,20000])' href="#">Retail Area</button>
+              <button class="dropdown-item" onclick='updateColorLinear("pluto", "#irs-pluto", "CommFAR", "pinks",[0,10])' href="#">Commercial FAR</button>
+              <button class="dropdown-item" onclick='updateColorLinear("pluto", "#irs-pluto", "UnitsRes", "pinks",[0,500])' href="#">Residential Units</button>
+              <button class="dropdown-item" onclick='updateColorLinear("pluto", "#irs-pluto", "ResidFAR", "pinks",[0,10])' href="#">Residential FAR</button>
+            </div>
+
+            <div class='col-lg-12 mt-3 px-0'>
+              <div id="plutoSlider">
+                <div id="irs-pluto"></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!--Business Data Data-->
+          <div class='row sidebar rounded p-3'>
+            <h4 class='col-lg-10 mb-0 px-0'>Businesses</h4>
+            <button id="places-button" type="button" class="col-lg-2 btn btn-outline-secondary btn-sm hidden" aria-haspopup="false">off</button>
+
+            <button id="btnGroupDrop2" type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              All Open Businesses
+            </button>
+            <div class="dropdown-menu scrollable-menu w-100" id="dropdown-menu-2" aria-labelledby="dropdownMenuButton">
+              <button class="dropdown-item" onclick='chooseHeight("all")' href="#">All Open Businesses</button>
+              <button class="dropdown-item" onclick='chooseHeight("rc")' href="#">Restaurants + Cafes</button>
+              <button class="dropdown-item" onclick='chooseHeight("ret")' href="#">Retail</button>
+              <button class="dropdown-item" onclick='chooseHeight("nl")' href="#">Nightlife</button>
+              <button class="dropdown-item" onclick='chooseHeight("ent")' href="#">Entertainment</button>
+              <button class="dropdown-item" onclick='chooseHeight("c")' href="#">Cultural</button>
+            </div>
+
+            <!-- <div class='row mt-5'>
+
+              <div class='col-12'>
+                <h6 class='m-0'>Hour: <label class='m-0' id='active-hour'>12PM</label></h6>
+                <div class="slidecontainer">
+                  <input id='slider-hours' class="slider" type="range" min="0" max="23" step='1' value="12" />
+                </div>
+              </div>
+
+              <div class='col-12 mt-2'>
+                  <h6 class='m-0'>Day: <label class='m-0' id='active-day'>Wed</label></h6>
+                  <div class="slidecontainer">
+                    <input id='slider-days' class="slider" type="range" min="0" max="1" step='1' value="0" />
+                  </div>
+              </div>
+
+            </div> -->
+
+            <!-- <div class='mt-5'>
+              <h6>Data: <a class='text-secondary' href='https://developers.google.com/places/web-service/intro'>Google Places Data</a></h6>
+            </div> -->
+
+          </div>
+
+        </div>
+        <!--column left-->
+
+        <div id='column-right' class='col mx-3'>
+          <div class='row sidebar rounded mb-3 p-3'>
+            <h4 id="story-title" class='col-lg-10 mb-0 px-0'>Urban Comfort Story</h4>
+            <button id="start-button" type="button" class="col-lg-2 btn btn-success btn-sm" aria-haspopup="false">Start</button>
+            <button id="previous-button" type="button" class="col-lg-1 btn btn-outline-secondary btn-sm" aria-haspopup="false"><</button>
+            <button id="next-button" type="button" class="col-lg-1 btn btn-outline-secondary btn-sm" aria-haspopup="false">></button>
+            <p id="story-text" class='col-lg-12 mb-0 px-0 mt-4'>Click start to learn about ways that we can consider outdoor urban comfort in Downtown Brooklyn.</p>
+          </div>
+        </div>
+        <!--column right-->
+
+      </div>
+      <!--row-->
+
+    </div>
+    <!-- container -->
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Main JavaScript -->
+    <script src='vendor/ion_slider/js/ion.rangeSlider.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/94/three.min.js'></script>
+    <script src='vendor/threejs/GLTFLoader.js'></script>
+    <script src='vendor/threejs/MTLLoader.js'></script>
+    <script src='vendor/threejs/LoaderSupport.js'></script>
+    <script src='vendor/threejs/OBJLoader2.js'></script>
+    <script src='vendor/threejs/OBJLoader.js'></script>
+
+
+    <script type="text/javascript" src="js/main.js"></script>
+
+  </body>
+
+</html>
